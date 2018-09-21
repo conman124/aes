@@ -87,7 +87,7 @@ struct State {
 }
 
 impl Key {
-    pub fn new(words: Vec<u32>) -> Key {
+    pub fn new(words: &[u32]) -> Key {
         match words.len() {
             4 => {},
             6 => {},
@@ -96,7 +96,7 @@ impl Key {
         };
 
         Key {
-            words
+            words: words.to_vec()
         }
     }
 
@@ -118,12 +118,12 @@ impl Key {
             vector.push(prev ^ temp);
         }
 
-        KeySchedule::new(vector)
+        KeySchedule::new(&vector)
     }
 }
 
 impl KeySchedule {
-    pub fn new(words: Vec<u32>) -> KeySchedule {
+    pub fn new(words: &[u32]) -> KeySchedule {
         match words.len() {
             44 => {},
             52 => {},
@@ -132,7 +132,7 @@ impl KeySchedule {
         };
         
         KeySchedule {
-            words
+            words: words.to_vec()
         }
     }
 }

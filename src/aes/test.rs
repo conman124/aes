@@ -42,11 +42,10 @@ mod tests {
 
     #[test]
     fn test_key_schedule() {
-        let input = vec![0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c];
-        let key = Key::new(input.clone());
+        let key = Key::new(&[0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c]);
         let schedule = key.create_schedule();
 
-        let expected = vec![
+        let expected = [
             0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
             0xa0fafe17, 0x88542cb1, 0x23a33939, 0x2a6c7605,
             0xf2c295f2, 0x7a96b943, 0x5935807a, 0x7359f67f,
@@ -60,7 +59,7 @@ mod tests {
             0xd014f9a8, 0xc9ee2589, 0xe13f0cc8, 0xb6630ca6
         ];
 
-        assert_eq!(KeySchedule::new(expected), schedule);
+        assert_eq!(KeySchedule::new(&expected), schedule);
     }
 
     // The test cases I've been given for shift_rows, mix_columns
@@ -113,4 +112,5 @@ mod tests {
 			[0xf2, 0x2b, 0x43, 0x49]
 		]});
 	}
+
 }

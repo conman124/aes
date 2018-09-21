@@ -1,3 +1,5 @@
+use ff::FF;
+
 const S_BOX: [u8; 256] = [
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -131,6 +133,27 @@ impl State {
 		}
 
 		ret
+	}
+
+	pub fn mix_columns(&self) -> State {
+		let mut ret = self.state.clone();
+
+		for i in 0..4 {
+			State::mix_column(&mut ret, i);
+		}
+
+		State{state: ret}
+	}
+
+	fn mix_column(arr: &mut [[u8;4]; 4], col: usize) {
+		for i in 0..4 {
+			arr[i][col] =
+				( FF::new(0x02) * FF::new(arr[i][col])
+				+ FF::new(0x03) * FF::new(arr[(i+1)%4][col])
+				+ FF::new(arr[(i+2)%4][col])
+				+ FF::new(arr[(i+3)%4][col])
+				).value();
+		}
 	}
 }
 
@@ -266,4 +289,14 @@ mod tests {
 		assert_eq!([1, 2, 3, 4], State::shift_row(&([1,2,3,4] as [u8; 4]), 0));
 		assert_eq!([3, 4, 1, 2], State::shift_row(&([1,2,3,4] as [u8; 4]), 2));
 	}
+
+	#[test]
+	fn test_mix_columns() {
+		assert_eq!(TEST_STATE.sub_bytes().shift_rows().mix_columns(), State{ state: [
+			[0x04, 0xe0, 0x48, 0x28],
+			[0x66, 0xcb, 0xf8, 0x06],
+			[0x81, 0x19, 0xd3, 0x26],
+			[0xe5, 0x9a, 0x7a, 0x4c]
+		]});
+	}	
 }

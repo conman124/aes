@@ -11,9 +11,9 @@ impl FF {
         FF{val}
     }
 
-	pub fn value(self) -> u8 {
-		self.val
-	}
+    pub fn value(self) -> u8 {
+        self.val
+    }
 
     fn xtime(&self) -> FF {
         let mut val = self.val;
@@ -44,7 +44,7 @@ impl ops::Mul for FF {
     type Output = FF;
 
     fn mul(self, rhs: FF) -> FF {
-		if self.val == 1 { return FF::new(rhs.val); }
+        if self.val == 1 { return FF::new(rhs.val); }
         if rhs.val == 1 { return FF::new(self.val); }
 
         let mut a = FF::new(self.val);
@@ -58,7 +58,7 @@ impl ops::Mul for FF {
         }
 
         res
-	}
+    }
 }
 
 impl cmp::PartialEq for FF {

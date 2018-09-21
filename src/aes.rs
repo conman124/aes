@@ -47,7 +47,7 @@ struct KeySchedule {
 
 #[derive(Debug, PartialEq)]
 struct State {
-	state: [[u8; 4]; 4]
+    state: [[u8; 4]; 4]
 }
 
 impl Key {
@@ -102,59 +102,59 @@ impl KeySchedule {
 }
 
 impl State {
-	pub fn sub_bytes(&self) -> State {
-		let mut ret = [[0;4]; 4];
+    pub fn sub_bytes(&self) -> State {
+        let mut ret = [[0;4]; 4];
 
-		for i in 0..4 {
-			for j in 0..4 {
-				ret[i][j] = sub_byte(self.state[i][j]);
-			}
-		}
+        for i in 0..4 {
+            for j in 0..4 {
+                ret[i][j] = sub_byte(self.state[i][j]);
+            }
+        }
 
-		State{ state: ret }
-	}
+        State{ state: ret }
+    }
 
-	pub fn shift_rows(&self) -> State {
-		State{state: [
-			State::shift_row(&self.state[0], 0),
-			State::shift_row(&self.state[1], 1),
-			State::shift_row(&self.state[2], 2),
-			State::shift_row(&self.state[3], 3),
-		]}
-	}
+    pub fn shift_rows(&self) -> State {
+        State{state: [
+            State::shift_row(&self.state[0], 0),
+            State::shift_row(&self.state[1], 1),
+            State::shift_row(&self.state[2], 2),
+            State::shift_row(&self.state[3], 3),
+        ]}
+    }
 
-	fn shift_row(row: &[u8; 4], amount: usize) -> [u8; 4] {
-		if amount == 0 { return *row; }
+    fn shift_row(row: &[u8; 4], amount: usize) -> [u8; 4] {
+        if amount == 0 { return *row; }
 
-		let mut ret = [0; 4];
+        let mut ret = [0; 4];
 
-		for i in 0..4 {
-			ret[i] = row[(i+amount) % 4];
-		}
+        for i in 0..4 {
+            ret[i] = row[(i+amount) % 4];
+        }
 
-		ret
-	}
+        ret
+    }
 
-	pub fn mix_columns(&self) -> State {
-		let mut ret = self.state.clone();
+    pub fn mix_columns(&self) -> State {
+        let mut ret = self.state.clone();
 
-		for i in 0..4 {
-			State::mix_column(&mut ret, i);
-		}
+        for i in 0..4 {
+            State::mix_column(&mut ret, i);
+        }
 
-		State{state: ret}
-	}
+        State{state: ret}
+    }
 
-	fn mix_column(arr: &mut [[u8;4]; 4], col: usize) {
-		for i in 0..4 {
-			arr[i][col] =
-				( FF::new(0x02) * FF::new(arr[i][col])
-				+ FF::new(0x03) * FF::new(arr[(i+1)%4][col])
-				+ FF::new(arr[(i+2)%4][col])
-				+ FF::new(arr[(i+3)%4][col])
-				).value();
-		}
-	}
+    fn mix_column(arr: &mut [[u8;4]; 4], col: usize) {
+        for i in 0..4 {
+            arr[i][col] =
+                ( FF::new(0x02) * FF::new(arr[i][col])
+                + FF::new(0x03) * FF::new(arr[(i+1)%4][col])
+                + FF::new(arr[(i+2)%4][col])
+                + FF::new(arr[(i+3)%4][col])
+                ).value();
+        }
+    }
 }
 
 fn word_to_bytes(word: u32) -> (u8, u8, u8, u8) {
@@ -183,7 +183,7 @@ fn sub_word(word: u32) -> u32 {
 }
 
 fn sub_byte(byte: u8) -> u8 {
-	S_BOX[byte as usize]
+    S_BOX[byte as usize]
 }
 
 fn rot_word(word: u32) -> u32 {
@@ -197,12 +197,12 @@ fn rot_word(word: u32) -> u32 {
 mod tests {
     use aes::*;
 
-	static TEST_STATE: State = State{ state: [
-		[0x19,0xa0,0x9a,0xe9],
-		[0x3d,0xf4,0xc6,0xf8],
-		[0xe3,0xe2,0x8d,0x48],
-		[0xbe,0x2b,0x2a,0x08]
-	]};
+    static TEST_STATE: State = State{ state: [
+        [0x19,0xa0,0x9a,0xe9],
+        [0x3d,0xf4,0xc6,0xf8],
+        [0xe3,0xe2,0x8d,0x48],
+        [0xbe,0x2b,0x2a,0x08]
+    ]};
 
     #[test]
     fn test_word_to_bytes() {
@@ -224,10 +224,10 @@ mod tests {
 
     #[test]
     fn test_sub_byte() {
-		assert_eq!(sub_byte(0x40), 0x09);
-		assert_eq!(sub_byte(0x50), 0x53);
-		assert_eq!(sub_byte(0x60), 0xd0);
-		assert_eq!(sub_byte(0x70), 0x51);
+        assert_eq!(sub_byte(0x40), 0x09);
+        assert_eq!(sub_byte(0x50), 0x53);
+        assert_eq!(sub_byte(0x60), 0xd0);
+        assert_eq!(sub_byte(0x70), 0x51);
     }
 
     #[test]
@@ -259,44 +259,44 @@ mod tests {
         assert_eq!(KeySchedule::new(expected), schedule);
     }
 
-	// The test cases I've been given for shift_rows, mix_columns
-	// and add_round_key are each based on the output of the previous
-	// function, so the later tests are dependent on the previous
-	// functions being correctly implemented.  It's not exactly a
-	// "unit test" per-se, but it's fine
-	#[test]
-	fn test_sub_bytes() {
-		assert_eq!(TEST_STATE.sub_bytes(), State{ state: [
-			[0xd4,0xe0,0xb8,0x1e],
-			[0x27,0xbf,0xb4,0x41],
-			[0x11,0x98,0x5d,0x52],
-			[0xae,0xf1,0xe5,0x30]
-		]});
-	}
+    // The test cases I've been given for shift_rows, mix_columns
+    // and add_round_key are each based on the output of the previous
+    // function, so the later tests are dependent on the previous
+    // functions being correctly implemented.  It's not exactly a
+    // "unit test" per-se, but it's fine
+    #[test]
+    fn test_sub_bytes() {
+        assert_eq!(TEST_STATE.sub_bytes(), State{ state: [
+            [0xd4,0xe0,0xb8,0x1e],
+            [0x27,0xbf,0xb4,0x41],
+            [0x11,0x98,0x5d,0x52],
+            [0xae,0xf1,0xe5,0x30]
+        ]});
+    }
 
-	#[test]
-	fn test_shift_rows() {
-		assert_eq!(TEST_STATE.sub_bytes().shift_rows(), State{ state: [
-			[0xd4, 0xe0, 0xb8, 0x1e],
-			[0xbf, 0xb4, 0x41, 0x27],
-			[0x5d, 0x52, 0x11, 0x98],
-			[0x30, 0xae, 0xf1, 0xe5]
-		]});
-	}
+    #[test]
+    fn test_shift_rows() {
+        assert_eq!(TEST_STATE.sub_bytes().shift_rows(), State{ state: [
+            [0xd4, 0xe0, 0xb8, 0x1e],
+            [0xbf, 0xb4, 0x41, 0x27],
+            [0x5d, 0x52, 0x11, 0x98],
+            [0x30, 0xae, 0xf1, 0xe5]
+        ]});
+    }
 
-	#[test]
-	fn test_shift_row() {
-		assert_eq!([1, 2, 3, 4], State::shift_row(&([1,2,3,4] as [u8; 4]), 0));
-		assert_eq!([3, 4, 1, 2], State::shift_row(&([1,2,3,4] as [u8; 4]), 2));
-	}
+    #[test]
+    fn test_shift_row() {
+        assert_eq!([1, 2, 3, 4], State::shift_row(&([1,2,3,4] as [u8; 4]), 0));
+        assert_eq!([3, 4, 1, 2], State::shift_row(&([1,2,3,4] as [u8; 4]), 2));
+    }
 
-	#[test]
-	fn test_mix_columns() {
-		assert_eq!(TEST_STATE.sub_bytes().shift_rows().mix_columns(), State{ state: [
-			[0x04, 0xe0, 0x48, 0x28],
-			[0x66, 0xcb, 0xf8, 0x06],
-			[0x81, 0x19, 0xd3, 0x26],
-			[0xe5, 0x9a, 0x7a, 0x4c]
-		]});
-	}	
+    #[test]
+    fn test_mix_columns() {
+        assert_eq!(TEST_STATE.sub_bytes().shift_rows().mix_columns(), State{ state: [
+            [0x04, 0xe0, 0x48, 0x28],
+            [0x66, 0xcb, 0xf8, 0x06],
+            [0x81, 0x19, 0xd3, 0x26],
+            [0xe5, 0x9a, 0x7a, 0x4c]
+        ]});
+    }	
 }

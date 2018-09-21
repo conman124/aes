@@ -111,6 +111,27 @@ impl State {
 
 		State{ state: ret }
 	}
+
+	pub fn shift_rows(&self) -> State {
+		State{state: [
+			State::shift_row(&self.state[0], 0),
+			State::shift_row(&self.state[1], 1),
+			State::shift_row(&self.state[2], 2),
+			State::shift_row(&self.state[3], 3),
+		]}
+	}
+
+	fn shift_row(row: &[u8; 4], amount: usize) -> [u8; 4] {
+		if amount == 0 { return *row; }
+
+		let mut ret = [0; 4];
+
+		for i in 0..4 {
+			ret[i] = row[(i+amount) % 4];
+		}
+
+		ret
+	}
 }
 
 fn word_to_bytes(word: u32) -> (u8, u8, u8, u8) {
@@ -228,5 +249,21 @@ mod tests {
 			[0x11,0x98,0x5d,0x52],
 			[0xae,0xf1,0xe5,0x30]
 		]});
+	}
+
+	#[test]
+	fn test_shift_rows() {
+		assert_eq!(TEST_STATE.sub_bytes().shift_rows(), State{ state: [
+			[0xd4, 0xe0, 0xb8, 0x1e],
+			[0xbf, 0xb4, 0x41, 0x27],
+			[0x5d, 0x52, 0x11, 0x98],
+			[0x30, 0xae, 0xf1, 0xe5]
+		]});
+	}
+
+	#[test]
+	fn test_shift_row() {
+		assert_eq!([1, 2, 3, 4], State::shift_row(&([1,2,3,4] as [u8; 4]), 0));
+		assert_eq!([3, 4, 1, 2], State::shift_row(&([1,2,3,4] as [u8; 4]), 2));
 	}
 }

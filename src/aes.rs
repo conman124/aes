@@ -43,6 +43,11 @@ struct KeySchedule {
     words: Vec<u32>
 }
 
+#[derive(Debug, PartialEq)]
+struct State {
+	state: [[u8; 4]; 4]
+}
+
 impl Key {
     pub fn new(words: Vec<u32>) -> Key {
         match words.len() {
@@ -94,6 +99,20 @@ impl KeySchedule {
     }
 }
 
+impl State {
+	pub fn sub_bytes(&self) -> State {
+		let mut ret = [[0;4]; 4];
+
+		for i in 0..4 {
+			for j in 0..4 {
+				ret[i][j] = sub_byte(self.state[i][j]);
+			}
+		}
+
+		State{ state: ret }
+	}
+}
+
 fn word_to_bytes(word: u32) -> (u8, u8, u8, u8) {
     (
         ((word & 0xff000000) >> 24) as u8,
@@ -112,11 +131,15 @@ fn bytes_to_word(bytes: (u8, u8, u8, u8)) -> u32 {
 
 fn sub_word(word: u32) -> u32 {
     let mut bytes = word_to_bytes(word);
-    bytes.0 = S_BOX[bytes.0 as usize];
-    bytes.1 = S_BOX[bytes.1 as usize];
-    bytes.2 = S_BOX[bytes.2 as usize];
-    bytes.3 = S_BOX[bytes.3 as usize];
+    bytes.0 = sub_byte(bytes.0);
+    bytes.1 = sub_byte(bytes.1);
+    bytes.2 = sub_byte(bytes.2);
+    bytes.3 = sub_byte(bytes.3);
     bytes_to_word(bytes)
+}
+
+fn sub_byte(byte: u8) -> u8 {
+	S_BOX[byte as usize]
 }
 
 fn rot_word(word: u32) -> u32 {
@@ -129,6 +152,13 @@ fn rot_word(word: u32) -> u32 {
 #[cfg(test)]
 mod tests {
     use aes::*;
+
+	static TEST_STATE: State = State{ state: [
+		[0x19,0xa0,0x9a,0xe9],
+		[0x3d,0xf4,0xc6,0xf8],
+		[0xe3,0xe2,0x8d,0x48],
+		[0xbe,0x2b,0x2a,0x08]
+	]};
 
     #[test]
     fn test_word_to_bytes() {
@@ -146,6 +176,14 @@ mod tests {
         assert_eq!(sub_word(0x40506070), 0x0953d051);
         assert_eq!(sub_word(0x8090a0b0), 0xcd60e0e7);
         assert_eq!(sub_word(0xc0d0e0f0), 0xba70e18c);
+    }
+
+    #[test]
+    fn test_sub_byte() {
+		assert_eq!(sub_byte(0x40), 0x09);
+		assert_eq!(sub_byte(0x50), 0x53);
+		assert_eq!(sub_byte(0x60), 0xd0);
+		assert_eq!(sub_byte(0x70), 0x51);
     }
 
     #[test]
@@ -176,4 +214,19 @@ mod tests {
 
         assert_eq!(KeySchedule::new(expected), schedule);
     }
+
+	// The test cases I've been given for shift_rows, mix_columns
+	// and add_round_key are each based on the output of the previous
+	// function, so the later tests are dependent on the previous
+	// functions being correctly implemented.  It's not exactly a
+	// "unit test" per-se, but it's fine
+	#[test]
+	fn test_sub_bytes() {
+		assert_eq!(TEST_STATE.sub_bytes(), State{ state: [
+			[0xd4,0xe0,0xb8,0x1e],
+			[0x27,0xbf,0xb4,0x41],
+			[0x11,0x98,0x5d,0x52],
+			[0xae,0xf1,0xe5,0x30]
+		]});
+	}
 }

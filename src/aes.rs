@@ -139,21 +139,27 @@ impl State {
         let mut ret = self.state.clone();
 
         for i in 0..4 {
-            State::mix_column(&mut ret, i);
+            let col = State::mix_column(&mut ret, i);
+            for j in 0..4 {
+                ret[j][i] = col[j];
+            }
         }
 
         State{state: ret}
     }
 
-    fn mix_column(arr: &mut [[u8;4]; 4], col: usize) {
+    fn mix_column(arr: &[[u8;4]; 4], col: usize) -> [u8; 4] {
+        let mut ret = [0; 4];
         for i in 0..4 {
-            arr[i][col] =
-                ( FF::new(0x02) * FF::new(arr[i][col])
-                + FF::new(0x03) * FF::new(arr[(i+1)%4][col])
+            ret[i] = (
+                  FF::new(arr[(i+0)%4][col]) * FF::new(0x02)
+                + FF::new(arr[(i+1)%4][col]) * FF::new(0x03)
                 + FF::new(arr[(i+2)%4][col])
                 + FF::new(arr[(i+3)%4][col])
-                ).value();
+            ).value();
         }
+
+        ret
     }
 }
 
@@ -298,5 +304,5 @@ mod tests {
             [0x81, 0x19, 0xd3, 0x26],
             [0xe5, 0x9a, 0x7a, 0x4c]
         ]});
-    }	
+    }
 }

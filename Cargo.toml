@@ -1,0 +1,6 @@
+[package]
+name = "aes"
+version = "0.1.0"
+authors = ["Connor Hewitt <connor.hewitt@gmail.com>"]
+
+[dependencies]

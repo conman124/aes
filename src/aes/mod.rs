@@ -197,6 +197,23 @@ impl State {
 
         ret
     }
+
+	pub fn add_round_key(&self, slice: &[u32]) -> State {
+		let mut ret = [[0;4]; 4];
+		for c in 0..4 {
+			let word = bytes_to_word((self.state[0][c],self.state[1][c],self.state[2][c],self.state[3][c]));
+
+			let res = word ^ slice[c];
+			let bytes = word_to_bytes(res);
+
+			ret[0][c] = bytes.0;
+			ret[1][c] = bytes.1;
+			ret[2][c] = bytes.2;
+			ret[3][c] = bytes.3;
+		}
+
+		State{state: ret}
+	}
 }
 
 #[cfg(test)]

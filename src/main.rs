@@ -1,5 +1,8 @@
 mod ff;
-mod aes;
+mod state;
+mod sbox;
+mod util;
+mod key;
 
 fn main() {
 }

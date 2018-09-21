@@ -36,6 +36,42 @@ const R_CON: [u32; 13*4] = [ 0x00000000,
     0xE8000000, 0xCB000000, 0x8D000000
 ];
 
+fn word_to_bytes(word: u32) -> (u8, u8, u8, u8) {
+    (
+        ((word & 0xff000000) >> 24) as u8,
+        ((word & 0x00ff0000) >> 16) as u8,
+        ((word & 0x0000ff00) >> 08) as u8,
+        ((word & 0x000000ff) >> 00) as u8
+    )
+}
+
+fn bytes_to_word(bytes: (u8, u8, u8, u8)) -> u32 {
+    (bytes.0 as u32) << 24 ^
+    (bytes.1 as u32) << 16 ^
+    (bytes.2 as u32) << 08 ^
+    (bytes.3 as u32)
+}
+
+fn sub_word(word: u32) -> u32 {
+    let mut bytes = word_to_bytes(word);
+    bytes.0 = sub_byte(bytes.0);
+    bytes.1 = sub_byte(bytes.1);
+    bytes.2 = sub_byte(bytes.2);
+    bytes.3 = sub_byte(bytes.3);
+    bytes_to_word(bytes)
+}
+
+fn sub_byte(byte: u8) -> u8 {
+    S_BOX[byte as usize]
+}
+
+fn rot_word(word: u32) -> u32 {
+    let high: u8 = ((word & 0xff000000) >> 24) as u8;
+    let word = word << 8;
+
+    word ^ (high as u32)
+}
+
 pub struct Key {
     words: Vec<u32>
 }
@@ -161,42 +197,6 @@ impl State {
 
         ret
     }
-}
-
-fn word_to_bytes(word: u32) -> (u8, u8, u8, u8) {
-    (
-        ((word & 0xff000000) >> 24) as u8,
-        ((word & 0x00ff0000) >> 16) as u8,
-        ((word & 0x0000ff00) >> 08) as u8,
-        ((word & 0x000000ff) >> 00) as u8
-    )
-}
-
-fn bytes_to_word(bytes: (u8, u8, u8, u8)) -> u32 {
-    (bytes.0 as u32) << 24 ^
-    (bytes.1 as u32) << 16 ^
-    (bytes.2 as u32) << 08 ^
-    (bytes.3 as u32)
-}
-
-fn sub_word(word: u32) -> u32 {
-    let mut bytes = word_to_bytes(word);
-    bytes.0 = sub_byte(bytes.0);
-    bytes.1 = sub_byte(bytes.1);
-    bytes.2 = sub_byte(bytes.2);
-    bytes.3 = sub_byte(bytes.3);
-    bytes_to_word(bytes)
-}
-
-fn sub_byte(byte: u8) -> u8 {
-    S_BOX[byte as usize]
-}
-
-fn rot_word(word: u32) -> u32 {
-    let high: u8 = ((word & 0xff000000) >> 24) as u8;
-    let word = word << 8;
-
-    word ^ (high as u32)
 }
 
 #[cfg(test)]

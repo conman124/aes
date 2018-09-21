@@ -1,7 +1,7 @@
 use std::ops;
 use std::cmp;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct FF {
     val: u8
 }
@@ -10,6 +10,10 @@ impl FF {
     pub fn new(val: u8) -> FF {
         FF{val}
     }
+
+	pub fn value(self) -> u8 {
+		self.val
+	}
 
     fn xtime(&self) -> FF {
         let mut val = self.val;
@@ -21,10 +25,10 @@ impl FF {
     }
 }
 
-impl<'a> ops::Add for &'a FF {
+impl ops::Add for FF {
     type Output = FF;
 
-    fn add(self, rhs: &'a FF) -> FF {
+    fn add(self, rhs: FF) -> FF {
         FF::new(self.val ^ rhs.val)
     }
 }
@@ -36,11 +40,11 @@ impl<'a> ops::Add for &'a FF {
     }
 }*/
 
-impl<'a> ops::Mul for &'a FF {
+impl ops::Mul for FF {
     type Output = FF;
 
-    fn mul(self, rhs: &'a FF) -> FF {
-        if self.val == 1 { return FF::new(rhs.val); }
+    fn mul(self, rhs: FF) -> FF {
+		if self.val == 1 { return FF::new(rhs.val); }
         if rhs.val == 1 { return FF::new(self.val); }
 
         let mut a = FF::new(self.val);
@@ -48,13 +52,13 @@ impl<'a> ops::Mul for &'a FF {
         
         for i in 0..8 {
             if rhs.val & (1 << i) > 0 {
-                res = &res + &a;
+                res = res + a;
             }
             a = a.xtime();
         }
 
         res
-    }
+	}
 }
 
 impl cmp::PartialEq for FF {
@@ -71,8 +75,8 @@ mod tests {
 
     #[test]
     fn add() {
-        assert_eq!(FF::new(0xd4), &FF::new(0x57) + &FF::new(0x83));
-        assert_eq!(FF::new(0xd4), &FF::new(0x83) + &FF::new(0x57));
+        assert_eq!(FF::new(0xd4), FF::new(0x57) + FF::new(0x83));
+        assert_eq!(FF::new(0xd4), FF::new(0x83) + FF::new(0x57));
     }
 
     #[test]
@@ -85,6 +89,6 @@ mod tests {
 
     #[test]
     fn mult() {
-        assert_eq!(FF::new(0xfe), &FF::new(0x57) * &FF::new(0x13));
+        assert_eq!(FF::new(0xfe), FF::new(0x57) * FF::new(0x13));
     }
 }

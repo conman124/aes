@@ -44,6 +44,15 @@ impl State {
         ]}
     }
 
+    pub fn inv_shift_rows(&self) -> State {
+        State{state: [
+            State::inv_shift_row(&self.state[0], 0),
+            State::inv_shift_row(&self.state[1], 1),
+            State::inv_shift_row(&self.state[2], 2),
+            State::inv_shift_row(&self.state[3], 3),
+        ]}
+    }
+
     fn shift_row(row: &[u8; 4], amount: usize) -> [u8; 4] {
         if amount == 0 { return *row; }
 
@@ -51,6 +60,18 @@ impl State {
 
         for i in 0..4 {
             ret[i] = row[(i+amount) % 4];
+        }
+
+        ret
+    }
+
+    fn inv_shift_row(row: &[u8; 4], amount: usize) -> [u8; 4] {
+        if amount == 0 { return *row; }
+
+        let mut ret = [0; 4];
+
+        for i in 0..4 {
+            ret[i] = row[(i+4-amount) % 4];
         }
 
         ret
@@ -181,11 +202,34 @@ mod tests {
     }
 
     #[test]
+    fn test_inv_shift_rows() {
+		assert_eq!(State::from_slice(&[
+			0x63,0x53,0xe0,0x8c,
+			0x09,0x60,0xe1,0x04,
+			0xcd,0x70,0xb7,0x51,
+			0xba,0xca,0xd0,0xe7
+		]).inv_shift_rows(), State::from_slice(&[
+			0x63,0xca,0xb7,0x04,
+			0x09,0x53,0xd0,0x51,
+			0xcd,0x60,0xe0,0xe7,
+			0xba,0x70,0xe1,0x8c
+		]));
+    }
+
+    #[test]
     fn test_shift_row() {
         assert_eq!([1, 2, 3, 4], State::shift_row(&([1,2,3,4] as [u8; 4]), 0));
 		assert_eq!([2, 3, 4, 1], State::shift_row(&([1,2,3,4] as [u8; 4]), 1));
         assert_eq!([3, 4, 1, 2], State::shift_row(&([1,2,3,4] as [u8; 4]), 2));
 		assert_eq!([4, 1, 2, 3], State::shift_row(&([1,2,3,4] as [u8; 4]), 3));
+    }
+
+    #[test]
+    fn test_inv_shift_row() {
+        assert_eq!([1,2,3,4], State::inv_shift_row(&([1, 2, 3, 4] as [u8; 4]), 0));
+		assert_eq!([1,2,3,4], State::inv_shift_row(&([2, 3, 4, 1] as [u8; 4]), 1));
+        assert_eq!([1,2,3,4], State::inv_shift_row(&([3, 4, 1, 2] as [u8; 4]), 2));
+		assert_eq!([1,2,3,4], State::inv_shift_row(&([4, 1, 2, 3] as [u8; 4]), 3));
     }
 
     #[test]

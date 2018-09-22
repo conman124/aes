@@ -5,6 +5,10 @@ pub struct Encryptor {
 	key: Key
 }
 
+pub struct Decryptor {
+	key: Key
+}
+
 impl Encryptor {
 	pub fn using(key: Key) -> Encryptor {
 		Encryptor{key}
@@ -53,6 +57,60 @@ impl Encryptor {
 		if debug { println!("round[10].k_sch    {:0>8x}{:0>8x}{:0>8x}{:0>8x}", ks[0], ks[1], ks[2], ks[3]); }
 		state = state.add_round_key(&key_schedule[nr]);
 		if debug { println!("round[10].output   {}", state); }
+
+		state.to_byte_array()
+	}
+}
+
+
+impl Decryptor {
+	pub fn using(key: Key) -> Decryptor {
+		Decryptor{key}
+	}
+
+	pub fn decrypt(&self, input: &[u8], debug: bool) -> [u8; 16] {
+		if input.len() != 16 { panic!("Can only decrypt 16 byte blocks!"); }
+
+		let key_schedule = self.key.create_schedule();
+
+		let mut state = State::from_slice(input);
+		if debug { println!("round[ 0].iinput   {}", state); }
+
+		let nr = match self.key.get_size_bits() {
+			128 => {10},
+			192 => {12},
+			256 => {14},
+			_ => {panic!("Invalid key size!")}
+		};
+
+		let ks = &key_schedule[nr];
+		if debug { println!("round[ 0].ik_sch   {:0>8x}{:0>8x}{:0>8x}{:0>8x}", ks[0], ks[1], ks[2], ks[3])}
+		state = state.add_round_key(ks);
+
+		for round in (1..nr).rev() {
+			if debug { println!("round[{: >2}].istart   {}", nr-round, state); }
+			state = state.inv_shift_rows();
+			if debug { println!("round[{: >2}].is_row   {}", nr-round, state); }
+			state = state.inv_sub_bytes();
+			if debug { println!("round[{: >2}].is_box   {}", nr-round, state); }
+
+			let ks = &key_schedule[round];
+			if debug { println!("round[{: >2}].ik_sch   {:0>8x}{:0>8x}{:0>8x}{:0>8x}", nr-round, ks[0], ks[1], ks[2], ks[3])}
+			state = state.add_round_key(ks);
+			if debug { println!("round[{: >2}].ik_add   {}", nr-round, state); }
+			state = state.inv_mix_columns();
+		}
+
+		if debug { println!("round[10].istart   {}", state); }
+		state = state.inv_shift_rows();
+		if debug { println!("round[10].is_row   {}", state); }
+		state = state.inv_sub_bytes();
+		if debug { println!("round[10].is_box   {}", state); }
+
+		let ks = &key_schedule[0];
+		if debug { println!("round[10].ik_sch   {:0>8x}{:0>8x}{:0>8x}{:0>8x}", ks[0], ks[1], ks[2], ks[3]); }
+		state = state.add_round_key(ks);
+		if debug { println!("round[10].ioutput  {}", state); }
 
 		state.to_byte_array()
 	}
@@ -121,5 +179,21 @@ mod tests {
 			0xea, 0xfc, 0x49, 0x90, 0x4b, 0x49, 0x60, 0x89
 		];
 		assert_eq!(expected, encryptor.encrypt(&input, false));
+	}
+
+	#[test]
+	fn test_decryptor128() {
+		let key = Key::new(&[0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f]);
+		let decryptor = Decryptor::using(key);
+
+		let input = [
+			0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30,
+			0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4, 0xc5, 0x5a
+		];
+		let expected = [
+			0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+			0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+		];
+		assert_eq!(expected, decryptor.decrypt(&input, true));
 	}
 }

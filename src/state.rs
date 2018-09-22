@@ -35,6 +35,18 @@ impl State {
         State{ state: ret }
     }
 
+    pub fn inv_sub_bytes(&self) -> State {
+        let mut ret = [[0;4]; 4];
+
+        for i in 0..4 {
+            for j in 0..4 {
+                ret[i][j] = sbox::inv_sub_byte(self.state[i][j]);
+            }
+        }
+
+        State{ state: ret }
+    }
+
     pub fn shift_rows(&self) -> State {
         State{state: [
             State::shift_row(&self.state[0], 0),

@@ -1,4 +1,6 @@
 use std::ops;
+use std::fmt;
+use std::result;
 
 use sbox;
 use util;
@@ -66,6 +68,15 @@ impl Key {
 
 	pub fn get_size_bits(&self) -> usize {
 		self.words.len() * 32
+	}
+}
+
+impl fmt::Display for Key {
+	fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> result::Result<(), fmt::Error> {
+		for word in &self.words {
+            write!(formatter, "{:0>8x}", word);
+        }
+        result::Result::Ok(())
 	}
 }
 

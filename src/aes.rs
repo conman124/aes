@@ -47,16 +47,16 @@ impl Encryptor {
 			state = state.add_round_key(ks);
 		}
 
-		if debug { println!("round[10].start    {}", state); }
+		if debug { println!("round[{}].start    {}", nr, state); }
 		state = state.sub_bytes();
-		if debug { println!("round[10].s_box    {}", state); }
+		if debug { println!("round[{}].s_box    {}", nr, state); }
 		state = state.shift_rows();
-		if debug { println!("round[10].s_row    {}", state); }
+		if debug { println!("round[{}].s_row    {}", nr, state); }
 
 		let ks = &key_schedule[nr];
-		if debug { println!("round[10].k_sch    {:0>8x}{:0>8x}{:0>8x}{:0>8x}", ks[0], ks[1], ks[2], ks[3]); }
+		if debug { println!("round[{}].k_sch    {:0>8x}{:0>8x}{:0>8x}{:0>8x}", nr, ks[0], ks[1], ks[2], ks[3]); }
 		state = state.add_round_key(&key_schedule[nr]);
-		if debug { println!("round[10].output   {}", state); }
+		if debug { println!("round[{}].output   {}", nr, state); }
 
 		state.to_byte_array()
 	}
@@ -101,16 +101,16 @@ impl Decryptor {
 			state = state.inv_mix_columns();
 		}
 
-		if debug { println!("round[10].istart   {}", state); }
+		if debug { println!("round[{}].istart   {}", nr, state); }
 		state = state.inv_shift_rows();
-		if debug { println!("round[10].is_row   {}", state); }
+		if debug { println!("round[{}].is_row   {}", nr, state); }
 		state = state.inv_sub_bytes();
-		if debug { println!("round[10].is_box   {}", state); }
+		if debug { println!("round[{}].is_box   {}", nr, state); }
 
 		let ks = &key_schedule[0];
-		if debug { println!("round[10].ik_sch   {:0>8x}{:0>8x}{:0>8x}{:0>8x}", ks[0], ks[1], ks[2], ks[3]); }
+		if debug { println!("round[{}].ik_sch   {:0>8x}{:0>8x}{:0>8x}{:0>8x}", nr, ks[0], ks[1], ks[2], ks[3]); }
 		state = state.add_round_key(ks);
-		if debug { println!("round[10].ioutput  {}", state); }
+		if debug { println!("round[{}].ioutput  {}", nr, state); }
 
 		state.to_byte_array()
 	}

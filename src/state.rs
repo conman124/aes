@@ -1,3 +1,6 @@
+use std::fmt;
+use std::result;
+
 use ff::FF;
 use sbox;
 use util;
@@ -8,6 +11,18 @@ pub struct State {
 }
 
 impl State {
+	pub fn from_slice(slice: &[u8]) -> State {
+		let mut state = [[0; 4]; 4];
+
+		for c in 0..4 {
+			for r in 0..4 {
+				state[r][c] = slice[c*4 + r];
+			}
+		}
+
+		State{state}
+	}
+
     pub fn sub_bytes(&self) -> State {
         let mut ret = [[0;4]; 4];
 
@@ -69,6 +84,7 @@ impl State {
     }
 
 	pub fn add_round_key(&self, slice: &[u32]) -> State {
+
 		let mut ret = [[0;4]; 4];
 		for c in 0..4 {
 			let word = util::bytes_to_word((self.state[0][c],self.state[1][c],self.state[2][c],self.state[3][c]));
@@ -83,6 +99,37 @@ impl State {
 		}
 
 		State{state: ret}
+	}
+
+	pub fn to_byte_array(self) -> [u8; 16] {
+		let mut ret = [0; 16];
+
+		for c in 0..4 {
+			for r in 0..4 {
+				ret[c*4 + r] = self.state[r][c];
+			}
+		}
+
+		ret
+}
+
+	fn to_u128(&self) -> u128 {
+		let mut res = 0;
+
+		for c in 0..4 {
+			for r in 0..4 {
+				res <<= 8;
+				res |= self.state[r][c] as u128;
+			}
+		}
+
+		res
+	}
+}
+
+impl fmt::Display for State {
+	fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> result::Result<(), fmt::Error> {
+		write!(formatter, "{:0>32x}", self.to_u128())
 	}
 }
 
@@ -120,12 +167,25 @@ mod tests {
             [0x5d, 0x52, 0x11, 0x98],
             [0x30, 0xae, 0xf1, 0xe5]
         ]});
+		assert_eq!(State::from_slice(&[
+			0x63,0xca,0xb7,0x04,
+			0x09,0x53,0xd0,0x51,
+			0xcd,0x60,0xe0,0xe7,
+			0xba,0x70,0xe1,0x8c
+		]).shift_rows(), State::from_slice(&[
+			0x63,0x53,0xe0,0x8c,
+			0x09,0x60,0xe1,0x04,
+			0xcd,0x70,0xb7,0x51,
+			0xba,0xca,0xd0,0xe7
+		]));
     }
 
     #[test]
     fn test_shift_row() {
         assert_eq!([1, 2, 3, 4], State::shift_row(&([1,2,3,4] as [u8; 4]), 0));
+		assert_eq!([2, 3, 4, 1], State::shift_row(&([1,2,3,4] as [u8; 4]), 1));
         assert_eq!([3, 4, 1, 2], State::shift_row(&([1,2,3,4] as [u8; 4]), 2));
+		assert_eq!([4, 1, 2, 3], State::shift_row(&([1,2,3,4] as [u8; 4]), 3));
     }
 
     #[test]
@@ -140,11 +200,34 @@ mod tests {
 
 	#[test]
 	fn test_add_round_key() {
-		assert_eq!(TEST_STATE.sub_bytes().shift_rows().mix_columns().add_round_key(&[0xa0fafe17, 0x88542cb1, 0x23a33939, 0x2a6c7605]), State{ state: [
+		assert_eq!(State{state: [
+			[0x04, 0xe0, 0x48, 0x28],
+			[0x66, 0xcb, 0xf8, 0x06],
+			[0x81, 0x19, 0xd3, 0x26],
+			[0xe5, 0x9a, 0x7a, 0x4c]
+		]}.add_round_key(&[0xa0fafe17, 0x88542cb1, 0x23a33939, 0x2a6c7605]), State{ state: [
 			[0xa4, 0x68, 0x6b, 0x02],
 			[0x9c, 0x9f, 0x5b, 0x6a],
 			[0x7f, 0x35, 0xea, 0x50],
 			[0xf2, 0x2b, 0x43, 0x49]
 		]});
+		assert_eq!(State::from_slice(&[
+			0x00,0x11,0x22,0x33,
+			0x44,0x55,0x66,0x77,
+			0x88,0x99,0xaa,0xbb,
+			0xcc,0xdd,0xee,0xff
+		]).add_round_key(&[
+			0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f
+		]), State::from_slice(&[
+			0x00,0x10,0x20,0x30,
+			0x40,0x50,0x60,0x70,
+			0x80,0x90,0xa0,0xb0,
+			0xc0,0xd0,0xe0,0xf0
+		]));
+	}
+
+	#[test]
+	fn test_to_u128() {
+		assert_eq!(0x193de3bea0f4e22b9ac68d2ae9f84808, TEST_STATE.to_u128());
 	}
 }

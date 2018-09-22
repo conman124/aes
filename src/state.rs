@@ -104,6 +104,33 @@ impl State {
         ret
     }
 
+    pub fn inv_mix_columns(&self) -> State {
+        let mut ret = self.state.clone();
+
+        for i in 0..4 {
+            let col = State::inv_mix_column(&mut ret, i);
+            for j in 0..4 {
+                ret[j][i] = col[j];
+            }
+        }
+
+        State{state: ret}
+    }
+
+    fn inv_mix_column(arr: &[[u8;4]; 4], col: usize) -> [u8; 4] {
+        let mut ret = [0; 4];
+        for i in 0..4 {
+            ret[i] = (
+                  FF::new(arr[(i+0)%4][col]) * FF::new(0x0e)
+                + FF::new(arr[(i+1)%4][col]) * FF::new(0x0b)
+                + FF::new(arr[(i+2)%4][col]) * FF::new(0x0d)
+                + FF::new(arr[(i+3)%4][col]) * FF::new(0x09)
+            ).value();
+        }
+
+        ret
+    }
+
 	pub fn add_round_key(&self, slice: &[u32]) -> State {
 
 		let mut ret = [[0;4]; 4];
@@ -240,6 +267,21 @@ mod tests {
             [0x81, 0x19, 0xd3, 0x26],
             [0xe5, 0x9a, 0x7a, 0x4c]
         ]});
+    }
+
+    #[test]
+    fn test_inv_mix_columns() {
+        assert_eq!(State::from_slice(&[
+            0x62, 0x7b, 0xce, 0xb9,
+            0x99, 0x9d, 0x5a, 0xaa,
+            0xc9, 0x45, 0xec, 0xf4,
+            0x23, 0xf5, 0x6d, 0xa5
+        ]).inv_mix_columns(), State::from_slice(&[
+            0xe5, 0x1c, 0x95, 0x02,
+            0xa5, 0xc1, 0x95, 0x05,
+            0x06, 0xa6, 0x10, 0x24,
+            0x59, 0x6b, 0x2b, 0x07
+        ]));
     }
 
 	#[test]
